@@ -118,7 +118,7 @@ async function analyzeDocument() {
     localStorage.setItem("docSize", selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : "Unknown size");
 
     // Redirect to summary page
-    window.location.href = "summary.html";
+    window.location.href = "summary";
   } catch (err) {
     console.error(err);
     showAlert("Error analyzing document", "error");

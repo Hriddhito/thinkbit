@@ -149,7 +149,7 @@ function fallbackShare() {
 }
 
 function analyzeAnother() {
-  window.location.href = 'index.html';
+  window.location.href = '/';
 }
 
 function showNotification(message, type = 'info') {
