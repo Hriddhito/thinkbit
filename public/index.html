@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LegalEase AI - Demystify Legal Documents</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- ✅ PDF.js global script -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+  <div class="bg-animation">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <div class="container">
+    <div class="logo"></div>
+    <h1>LegalEase AI</h1>
+    <p class="subtitle">Transform complex legal documents into clear, understandable insights</p>
+    
+    <div class="upload-area" id="upload-area">
+      <span class="upload-icon">📄</span>
+      <div class="upload-text">Drop your legal document here</div>
+      <div class="upload-subtext">or click to browse • Supports PDF, DOC, DOCX, TXT • Max 10MB</div>
+    </div>
+    
+    <input type="file" id="file-input" accept=".pdf,.doc,.docx,.txt" />
+    
+    <div class="file-info" id="file-info">
+      <div class="file-name" id="file-name"></div>
+      <div class="file-size" id="file-size"></div>
+    </div>
+    
+    <div class="progress-bar" id="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    
+    <div class="action-buttons">
+      <button class="btn btn-primary" id="analyze-btn">
+        🤖 Analyze Document
+      </button>
+      <button class="btn btn-secondary" id="choose-file-btn">
+        📎 Choose Different File
+      </button>
+    </div>
+
+    <!-- ✅ Results Section -->
+    <div class="analysis-results" id="analysis-results" style="display:none;">
+      <h2>📑 Document Summary</h2>
+      <div id="analysis-text"></div>
+    </div>
+    <!-- ✅ End Results Section -->
+
+    <div class="features">
+      <div class="feature">
+        <span class="feature-icon">🔍</span>
+        <div class="feature-text">Smart Analysis</div>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🛡️</span>
+        <div class="feature-text">Private & Secure</div>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">⚡</span>
+        <div class="feature-text">Instant Results</div>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">💡</span>
+        <div class="feature-text">Plain English</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
