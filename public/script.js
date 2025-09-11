@@ -1,5 +1,5 @@
 // 🌐 Replace this with your Render backend URL
-const BACKEND_URL = "https://your-render-service.onrender.com/analyze";
+const BACKEND_URL = "https://thinkbit-h81d.onrender.com/analyze";
 
 // DOM Elements
 const fileInput = document.getElementById("file-input");
@@ -16,14 +16,15 @@ const progressFill = document.getElementById("progress-fill");
 let selectedFile = null;
 
 // Event listeners
-document.addEventListener("DOMContentLoaded", initializeApp);
-fileInput.addEventListener("change", handleFileSelect);
-uploadArea.addEventListener("click", () => fileInput.click());
-uploadArea.addEventListener("dragover", handleDragOver);
-uploadArea.addEventListener("dragleave", handleDragLeave);
-uploadArea.addEventListener("drop", handleDrop);
-analyzeBtn.addEventListener("click", analyzeDocument);
-chooseFileBtn.addEventListener("click", () => fileInput.click());
+document.addEventListener("DOMContentLoaded", () => {
+  // Wake up backend server to reduce cold start delay
+  if (BACKEND_URL) {
+    fetch(BACKEND_URL, { method: "HEAD" })
+      .then(() => console.log("Backend wake-up ping sent"))
+      .catch(() => console.log("Backend wake-up ping failed"));
+  }
+  initializeApp();
+});
 
 // Initialize
 function initializeApp() {
