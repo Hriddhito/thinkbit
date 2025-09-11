@@ -19,7 +19,7 @@ let selectedFile = null;
 document.addEventListener("DOMContentLoaded", () => {
   // Wake up backend server to reduce cold start delay
   if (BACKEND_URL) {
-    fetch(BACKEND_URL, { method: "HEAD" })
+    fetch("https://thinkbit-h81d.onrender.com/health", { method: "GET" })
       .then(() => console.log("Backend wake-up ping sent"))
       .catch(() => console.log("Backend wake-up ping failed"));
   }
