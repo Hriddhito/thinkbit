@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detailed Document Analysis - LegalEase AI</title>
+  <link rel="stylesheet" href="details-styles.css">
+</head>
+<body>
+  <div class="bg-animation">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <div class="details-container">
+    <!-- Header -->
+    <header class="details-header">
+      <h1>📑 Detailed Analysis</h1>
+      <p id="doc-title">Loading document...</p>
+      <p id="doc-meta">Processing...</p>
+    </header>
+
+    <!-- Document Preview (Updated with Navigation) -->
+    <section class="document-preview">
+      <h2>📄 Document Preview</h2>
+      <div class="pdf-viewer">
+        <canvas id="pdf-canvas"></canvas>
+        <div class="pdf-controls">
+          <button id="prev-page">⬅ Prev</button>
+          <span id="page-info">Page 1 of ?</span>
+          <button id="next-page">Next ➡</button>
+        </div>
+      </div>
+      <div id="preview-fallback" style="display:none; color:red; margin-top:10px;">
+        ⚠️ Could not render PDF. Please download the file instead.
+      </div>
+    </section>
+
+    <!-- Document Details -->
+    <section class="document-details">
+      <h2>🔍 Document Information</h2>
+      <ul>
+        <li><strong>Document Type:</strong> <span id="detail-type">—</span></li>
+        <li><strong>Pages:</strong> <span id="detail-pages">—</span></li>
+        <li><strong>Word Count:</strong> <span id="detail-words">—</span></li>
+        <li><strong>Key Parties:</strong> <span id="detail-parties">—</span></li>
+        <li><strong>Jurisdiction:</strong> <span id="detail-jurisdiction">—</span></li>
+        <li><strong>Important Dates:</strong> <span id="detail-dates">—</span></li>
+      </ul>
+    </section>
+
+    <!-- Chatbot Section -->
+    <section class="chatbot-section">
+      <h2>💬 Ask Questions About This Document</h2>
+      <div id="chat-window" class="chat-window">
+        <div class="messages" id="messages"></div>
+      </div>
+      <div class="chat-input-container">
+        <input type="text" id="chat-input" placeholder="Ask a question..." />
+        <button id="send-btn">Send</button>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Powered by <strong>LegalEase AI</strong> • Secure AI-Powered Legal Insights</p>
+    </footer>
+  </div>
+
+  <!-- ✅ Load PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="details-script.js"></script>
+</body>
+</html>

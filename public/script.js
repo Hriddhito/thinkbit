@@ -1,4 +1,4 @@
-// 🌐 Replace this with your Render backend URL
+// 🌐 Backend URL (Render or local)
 const BACKEND_URL = "https://thinkbit-h81d.onrender.com/analyze";
 
 // DOM Elements
@@ -7,13 +7,15 @@ const fileInfo = document.getElementById("file-info");
 const fileName = document.getElementById("file-name");
 const fileSize = document.getElementById("file-size");
 const uploadArea = document.getElementById("upload-area");
-const analyzeBtn = document.getElementById("analyze-btn");
+const quickSummaryBtn = document.getElementById("quick-summary-btn");
+const botSummaryBtn = document.getElementById("bot-summary-btn");
 const chooseFileBtn = document.getElementById("choose-file-btn");
 const progressBar = document.getElementById("progress-bar");
 const progressFill = document.getElementById("progress-fill");
 
 // Global variables
 let selectedFile = null;
+let extractedText = "";
 
 // Event listeners
 document.addEventListener("DOMContentLoaded", () => {
@@ -30,7 +32,9 @@ uploadArea.addEventListener("click", () => fileInput.click());
 uploadArea.addEventListener("dragover", handleDragOver);
 uploadArea.addEventListener("dragleave", handleDragLeave);
 uploadArea.addEventListener("drop", handleDrop);
-analyzeBtn.addEventListener("click", analyzeDocument);
+
+quickSummaryBtn.addEventListener("click", () => analyzeDocument("/summary"));
+botSummaryBtn.addEventListener("click", () => analyzeDocument("/details"));
 chooseFileBtn.addEventListener("click", () => fileInput.click());
 });
 
@@ -78,7 +82,7 @@ function updateUploadAreaSuccess() {
   uploadArea.innerHTML = `
     <span class="upload-icon">✅</span>
     <div class="upload-text">Document ready for analysis</div>
-    <div class="upload-subtext">Click "Analyze Document" to continue</div>
+    <div class="upload-subtext">Click a button below to continue</div>
   `;
 }
 
@@ -97,11 +101,14 @@ function handleDrop(e) {
   e.preventDefault();
   uploadArea.classList.remove("dragover");
   const files = e.dataTransfer.files;
-  if (files.length > 0) { fileInput.files = files; handleFileSelect(); }
+  if (files.length > 0) {
+    fileInput.files = files;
+    handleFileSelect();
+  }
 }
 
 // Analyze document
-async function analyzeDocument() {
+async function analyzeDocument(targetPage) {
   if (!selectedFile) {
     showAlert("Please select a document first!", "warning");
     return;
@@ -111,6 +118,7 @@ async function analyzeDocument() {
 
   try {
     const text = await extractText(selectedFile);
+    extractedText = text;
 
     const response = await fetch(BACKEND_URL, {
       method: "POST",
@@ -118,21 +126,34 @@ async function analyzeDocument() {
       body: JSON.stringify({ text }),
     });
 
+    if (!response.ok) {
+      throw new Error("Analysis request failed");
+    }
+
     const data = await response.json();
+    saveAndRedirect(data.result, targetPage);
 
-    // ✅ Save data in localStorage for summary.html
-    localStorage.setItem("docSummary", data.result);
-    localStorage.setItem("docName", selectedFile ? selectedFile.name : "Legal Document");
-    localStorage.setItem("docSize", selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : "Unknown size");
-
-    // Redirect to summary page
-    window.location.href = "/summary";
   } catch (err) {
-    console.error(err);
-    showAlert("Error analyzing document", "error");
+    console.error("Analysis error:", err);
+    showAlert("Error analyzing document. Please try again.", "error");
+    resetAnalysisUI();
   }
+}
 
-  resetAnalysisUI();
+function saveAndRedirect(summaryResult, targetPage) {
+  // ✅ Save metadata and summary
+  localStorage.setItem("docSummary", summaryResult);
+  localStorage.setItem("docName", selectedFile.name);
+  localStorage.setItem("docSize", `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`);
+  localStorage.setItem("docText", extractedText);
+
+  // ✅ Save original file (Base64)
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    localStorage.setItem("docFile", e.target.result); // base64 Data URL
+    window.location.href = targetPage; // redirect based on button
+  };
+  reader.readAsDataURL(selectedFile);
 }
 
 // Extract text
@@ -143,23 +164,26 @@ async function extractText(file) {
   return `Uploaded file (${ext}) not supported for text extraction.`;
 }
 
-// ✅ PDF extraction (using pdfjsLib global script in index.html)
+// PDF extraction using global pdfjsLib
 async function extractPdfText(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async function () {
       try {
         const pdfData = new Uint8Array(reader.result);
-        const pdf = await window['pdfjsLib'].getDocument({ data: pdfData }).promise;
+        const pdf = await window["pdfjsLib"].getDocument({ data: pdfData }).promise;
 
         let textContent = "";
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const text = await page.getTextContent();
-          textContent += text.items.map(s => s.str).join(" ") + "\n";
+          textContent += text.items.map((s) => s.str).join(" ") + "\n";
         }
         resolve(textContent);
-      } catch (err) { reject(err); }
+      } catch (err) {
+        console.error("PDF extraction error:", err);
+        reject(err);
+      }
     };
     reader.onerror = reject;
     reader.readAsArrayBuffer(file);
@@ -169,22 +193,88 @@ async function extractPdfText(file) {
 // UI Helpers
 function startAnalysis() {
   progressBar.style.display = "block";
-  analyzeBtn.disabled = true;
-  analyzeBtn.innerHTML = "🔄 Processing...";
+  quickSummaryBtn.disabled = true;
+  botSummaryBtn.disabled = true;
+
+  let progress = 0;
+  const progressInterval = setInterval(() => {
+    progress += Math.random() * 15;
+    if (progress > 90) progress = 90;
+    progressFill.style.width = progress + "%";
+  }, 200);
+
+  quickSummaryBtn._progressInterval = progressInterval;
 }
+
 function resetAnalysisUI() {
-  analyzeBtn.disabled = false;
-  analyzeBtn.innerHTML = "🤖 Analyze Document";
+  quickSummaryBtn.disabled = false;
+  botSummaryBtn.disabled = false;
   progressBar.style.display = "none";
   progressFill.style.width = "0%";
+
+  if (quickSummaryBtn._progressInterval) {
+    clearInterval(quickSummaryBtn._progressInterval);
+    quickSummaryBtn._progressInterval = null;
+  }
 }
-function showAlert(message) { alert(message); }
+
+function showAlert(message, type = "info") {
+  const alertDiv = document.createElement("div");
+  alertDiv.className = `custom-alert alert-${type}`;
+  alertDiv.innerHTML = `
+    <div style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${type === "error" ? "#ef4444" : type === "warning" ? "#f59e0b" : "#3b82f6"};
+      color: white;
+      padding: 15px 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      z-index: 1000;
+      font-weight: 600;
+      animation: slideInRight 0.3s ease;
+      max-width: 300px;
+    ">
+      ${message}
+    </div>
+  `;
+  document.body.appendChild(alertDiv);
+
+  if (!document.querySelector("#alert-styles")) {
+    const style = document.createElement("style");
+    style.id = "alert-styles";
+    style.textContent = `
+      @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(100%); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  setTimeout(() => {
+    if (alertDiv.parentNode) {
+      alertDiv.style.opacity = "0";
+      alertDiv.style.transform = "translateX(100%)";
+      setTimeout(() => {
+        document.body.removeChild(alertDiv);
+      }, 300);
+    }
+  }, 4000);
+}
 
 // Features hover
 function addFeatureInteractions() {
-  document.querySelectorAll(".feature").forEach(f => {
-    f.addEventListener("mouseenter", () => f.style.background = "rgba(79,70,229,0.1)");
-    f.addEventListener("mouseleave", () => f.style.background = "rgba(79,70,229,0.05)");
+  document.querySelectorAll(".feature").forEach((f) => {
+    f.addEventListener("mouseenter", () => {
+      f.style.background = "rgba(79,70,229,0.1)";
+      f.style.transform = "translateY(-2px)";
+    });
+    f.addEventListener("mouseleave", () => {
+      f.style.background = "rgba(79,70,229,0.05)";
+      f.style.transform = "translateY(0)";
+    });
   });
 }
 
@@ -195,10 +285,12 @@ function getFileExtension(filename) {
 
 function resetForm() {
   selectedFile = null;
+  extractedText = "";
   fileInput.value = "";
   fileInfo.style.display = "none";
   resetUploadArea();
   resetAnalysisUI();
 }
 
+// Global API
 window.LegalEaseAI = { resetForm, analyzeDocument, validateFile };
