@@ -1,3 +1,5 @@
+const BACKEND_URL = "https://thinkbit-h81d.onrender.com/analyze";
+
 document.addEventListener("DOMContentLoaded", async () => {
   // Load document data from localStorage
   const docName = localStorage.getItem("docName") || "Unknown Document";
@@ -110,7 +112,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     chatInput.value = "";
 
     try {
-      const response = await fetch("/analyze", {
+      const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
