@@ -19,11 +19,19 @@ let selectedFile = null;
 document.addEventListener("DOMContentLoaded", () => {
   // Wake up backend server to reduce cold start delay
   if (BACKEND_URL) {
-    fetch("https://thinkbit-h81d.onrender.com/health", { method: "GET" })
+    fetch(BACKEND_URL, { method: "HEAD" })
       .then(() => console.log("Backend wake-up ping sent"))
       .catch(() => console.log("Backend wake-up ping failed"));
   }
   initializeApp();
+
+fileInput.addEventListener("change", handleFileSelect);
+uploadArea.addEventListener("click", () => fileInput.click());
+uploadArea.addEventListener("dragover", handleDragOver);
+uploadArea.addEventListener("dragleave", handleDragLeave);
+uploadArea.addEventListener("drop", handleDrop);
+analyzeBtn.addEventListener("click", analyzeDocument);
+chooseFileBtn.addEventListener("click", () => fileInput.click());
 });
 
 // Initialize

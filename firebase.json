@@ -6,8 +6,8 @@
       "**/node_modules/**"
     ],
     "rewrites": [
-      { "source": "/", "destination": "/index.html" },
-      { "source": "/summary", "destination": "/summary.html" }
+      { "source": "/summary", "destination": "/summary.html" },
+      { "source": "/", "destination": "/index.html" }
     ]
   }
 }
