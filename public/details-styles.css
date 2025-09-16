@@ -134,3 +134,39 @@ body {
   font-size: 0.95em;
   color: #374151;
 }
+
+.details-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+#analyze-another-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.95em;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+#analyze-another-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    background: linear-gradient(135deg, #059669, #047857);
+}
+
+#analyze-another-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.document-details ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}

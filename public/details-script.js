@@ -158,3 +158,7 @@ function detectDates(text) {
   const matches = text.match(/\b(?:\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\b\s+\d{1,2},?\s+\d{4})/gi);
   return matches ? matches.join(", ") : "Not detected";
 }
+
+function analyzeAnother() {
+  window.location.href = '/';
+}
