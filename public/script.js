@@ -1,296 +1,527 @@
-// 🌐 Backend URL (Render or local)
-const BACKEND_URL = "https://thinkbit-h81d.onrender.com/analyze";
+// Firebase Config (replace with your actual config)
+const firebaseConfig = {
+  apiKey: "AIzaSyABNsM1iXFLPz0P2-qXrUe_NQ42LMdrWEo",
+  authDomain: "thinkbit-471218.firebaseapp.com",
+  projectId:  "thinkbit-471218",
+  storageBucket: "thinkbit-471218.firebasestorage.app",
+  messagingSenderId: "170494573626",
+  appId: "1:170494573626:web:73d7211f47128be6850903"
+};
 
-// DOM Elements
-const fileInput = document.getElementById("file-input");
-const fileInfo = document.getElementById("file-info");
-const fileName = document.getElementById("file-name");
-const fileSize = document.getElementById("file-size");
-const uploadArea = document.getElementById("upload-area");
-const quickSummaryBtn = document.getElementById("quick-summary-btn");
-const botSummaryBtn = document.getElementById("bot-summary-btn");
-const chooseFileBtn = document.getElementById("choose-file-btn");
-const progressBar = document.getElementById("progress-bar");
-const progressFill = document.getElementById("progress-fill");
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 
-// Global variables
-let selectedFile = null;
-let extractedText = "";
-
-// Event listeners
 document.addEventListener("DOMContentLoaded", () => {
-  // Wake up backend server to reduce cold start delay
-  if (BACKEND_URL) {
-    fetch(BACKEND_URL, { method: "HEAD" })
-      .then(() => console.log("Backend wake-up ping sent"))
-      .catch(() => console.log("Backend wake-up ping failed"));
-  }
-  initializeApp();
+  console.log("🚀 LegalEase AI Home page loaded");
 
-fileInput.addEventListener("change", handleFileSelect);
-uploadArea.addEventListener("click", () => fileInput.click());
-uploadArea.addEventListener("dragover", handleDragOver);
-uploadArea.addEventListener("dragleave", handleDragLeave);
-uploadArea.addEventListener("drop", handleDrop);
+  // Elements
+  const loginBtn = document.getElementById("login-btn");
+  const signupBtn = document.getElementById("signup-btn");
+  const loginModal = document.getElementById("login-modal");
+  const signupModal = document.getElementById("signup-modal");
+  const closeBtns = document.querySelectorAll(".close");
 
-quickSummaryBtn.addEventListener("click", () => analyzeDocument("/summary"));
-botSummaryBtn.addEventListener("click", () => analyzeDocument("/details"));
-chooseFileBtn.addEventListener("click", () => fileInput.click());
-});
-
-// Initialize
-function initializeApp() {
-  console.log("LegalEase AI initialized");
-  addFeatureInteractions();
-}
-
-// File handling
-function handleFileSelect() {
-  const file = fileInput.files[0];
-  if (!file) return;
-
-  if (validateFile(file)) {
-    selectedFile = file;
-    displayFileInfo(file);
-    updateUploadAreaSuccess();
-  }
-}
-
-function validateFile(file) {
-  const allowedTypes = [".pdf", ".doc", ".docx", ".txt"];
-  const ext = "." + file.name.split(".").pop().toLowerCase();
-
-  if (!allowedTypes.includes(ext)) {
-    showAlert("Invalid file type. Upload PDF, DOC, DOCX, or TXT", "error");
-    return false;
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    showAlert("File size must be less than 10MB", "error");
-    return false;
-  }
-  return true;
-}
-
-function displayFileInfo(file) {
-  fileName.textContent = file.name;
-  fileSize.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
-  fileInfo.style.display = "block";
-}
-
-function updateUploadAreaSuccess() {
-  uploadArea.innerHTML = `
-    <span class="upload-icon">✅</span>
-    <div class="upload-text">Document ready for analysis</div>
-    <div class="upload-subtext">Click a button below to continue</div>
-  `;
-}
-
-function resetUploadArea() {
-  uploadArea.innerHTML = `
-    <span class="upload-icon">📄</span>
-    <div class="upload-text">Drop your legal document here</div>
-    <div class="upload-subtext">or click to browse • Supports PDF, DOC, DOCX, TXT • Max 10MB</div>
-  `;
-}
-
-// Drag/drop
-function handleDragOver(e) { e.preventDefault(); uploadArea.classList.add("dragover"); }
-function handleDragLeave(e) { e.preventDefault(); uploadArea.classList.remove("dragover"); }
-function handleDrop(e) {
-  e.preventDefault();
-  uploadArea.classList.remove("dragover");
-  const files = e.dataTransfer.files;
-  if (files.length > 0) {
-    fileInput.files = files;
-    handleFileSelect();
-  }
-}
-
-// Analyze document
-async function analyzeDocument(targetPage) {
-  if (!selectedFile) {
-    showAlert("Please select a document first!", "warning");
-    return;
-  }
-
-  startAnalysis();
-
-  try {
-    const text = await extractText(selectedFile);
-    extractedText = text;
-
-    const response = await fetch(BACKEND_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Analysis request failed");
-    }
-
-    const data = await response.json();
-    saveAndRedirect(data.result, targetPage);
-
-  } catch (err) {
-    console.error("Analysis error:", err);
-    showAlert("Error analyzing document. Please try again.", "error");
-    resetAnalysisUI();
-  }
-}
-
-function saveAndRedirect(summaryResult, targetPage) {
-  // ✅ Save metadata and summary
-  localStorage.setItem("docSummary", summaryResult);
-  localStorage.setItem("docName", selectedFile.name);
-  localStorage.setItem("docSize", `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`);
-  localStorage.setItem("docText", extractedText);
-
-  // ✅ Save original file (Base64)
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    localStorage.setItem("docFile", e.target.result); // base64 Data URL
-    window.location.href = targetPage; // redirect based on button
-  };
-  reader.readAsDataURL(selectedFile);
-}
-
-// Extract text
-async function extractText(file) {
-  const ext = getFileExtension(file.name);
-  if (ext === "txt") return await file.text();
-  if (ext === "pdf") return await extractPdfText(file);
-  return `Uploaded file (${ext}) not supported for text extraction.`;
-}
-
-// PDF extraction using global pdfjsLib
-async function extractPdfText(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = async function () {
-      try {
-        const pdfData = new Uint8Array(reader.result);
-        const pdf = await window["pdfjsLib"].getDocument({ data: pdfData }).promise;
-
-        let textContent = "";
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const text = await page.getTextContent();
-          textContent += text.items.map((s) => s.str).join(" ") + "\n";
-        }
-        resolve(textContent);
-      } catch (err) {
-        console.error("PDF extraction error:", err);
-        reject(err);
-      }
-    };
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
+  // Enhanced modal opening with smooth animations
+  loginBtn.addEventListener("click", () => {
+    loginModal.classList.add("show");
+    document.body.style.overflow = "hidden";
   });
-}
 
-// UI Helpers
-function startAnalysis() {
-  progressBar.style.display = "block";
-  quickSummaryBtn.disabled = true;
-  botSummaryBtn.disabled = true;
+  signupBtn.addEventListener("click", () => {
+    signupModal.classList.add("show");
+    document.body.style.overflow = "hidden";
+  });
 
-  let progress = 0;
-  const progressInterval = setInterval(() => {
-    progress += Math.random() * 15;
-    if (progress > 90) progress = 90;
-    progressFill.style.width = progress + "%";
-  }, 200);
+  // Close modals with improved UX
+  closeBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const modalId = btn.getAttribute("data-close");
+      const modal = document.getElementById(modalId);
+      modal.classList.remove("show");
+      document.body.style.overflow = "auto";
+    });
+  });
 
-  quickSummaryBtn._progressInterval = progressInterval;
-}
+  // Close modal when clicking outside with smooth transition
+  window.addEventListener("click", (e) => {
+    if (e.target.classList.contains("modal")) {
+      e.target.classList.remove("show");
+      document.body.style.overflow = "auto";
+    }
+  });
 
-function resetAnalysisUI() {
-  quickSummaryBtn.disabled = false;
-  botSummaryBtn.disabled = false;
-  progressBar.style.display = "none";
-  progressFill.style.width = "0%";
-
-  if (quickSummaryBtn._progressInterval) {
-    clearInterval(quickSummaryBtn._progressInterval);
-    quickSummaryBtn._progressInterval = null;
-  }
-}
-
-function showAlert(message, type = "info") {
-  const alertDiv = document.createElement("div");
-  alertDiv.className = `custom-alert alert-${type}`;
-  alertDiv.innerHTML = `
-    <div style="
+  // Enhanced notification system
+  function showNotification(message, type = 'success') {
+    // Create a toast notification
+    const toast = document.createElement('div');
+    toast.style.cssText = `
       position: fixed;
       top: 20px;
       right: 20px;
-      background: ${type === "error" ? "#ef4444" : type === "warning" ? "#f59e0b" : "#3b82f6"};
-      color: white;
-      padding: 15px 20px;
+      padding: 16px 24px;
       border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      z-index: 1000;
+      color: white;
       font-weight: 600;
+      z-index: 10000;
       animation: slideInRight 0.3s ease;
-      max-width: 300px;
-    ">
-      ${message}
-    </div>
-  `;
-  document.body.appendChild(alertDiv);
+      max-width: 350px;
+      word-wrap: break-word;
+      ${type === 'success' ? 'background: linear-gradient(135deg, #10b981, #059669);' : 'background: linear-gradient(135deg, #ef4444, #dc2626);'}
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
 
-  if (!document.querySelector("#alert-styles")) {
-    const style = document.createElement("style");
-    style.id = "alert-styles";
+    // Add slide animation
+    const style = document.createElement('style');
     style.textContent = `
       @keyframes slideInRight {
-        from { opacity: 0; transform: translateX(100%); }
-        to { opacity: 1; transform: translateX(0); }
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
       }
     `;
     document.head.appendChild(style);
+
+    setTimeout(() => {
+      toast.style.animation = 'slideInRight 0.3s ease reverse';
+      setTimeout(() => {
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast);
+        }
+        if (document.head.contains(style)) {
+          document.head.removeChild(style);
+        }
+      }, 300);
+    }, 3000);
   }
 
-  setTimeout(() => {
-    if (alertDiv.parentNode) {
-      alertDiv.style.opacity = "0";
-      alertDiv.style.transform = "translateX(100%)";
-      setTimeout(() => {
-        document.body.removeChild(alertDiv);
-      }, 300);
+  // Login Form with enhanced UX
+  document.getElementById("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    
+    // Basic validation
+    if (!email || !password) {
+      showNotification("Please fill in all fields", 'error');
+      return;
     }
-  }, 4000);
-}
 
-// Features hover
-function addFeatureInteractions() {
-  document.querySelectorAll(".feature").forEach((f) => {
-    f.addEventListener("mouseenter", () => {
-      f.style.background = "rgba(79,70,229,0.1)";
-      f.style.transform = "translateY(-2px)";
+    if (!isValidEmail(email)) {
+      showNotification("Please enter a valid email address", 'error');
+      return;
+    }
+    
+    // Add loading state
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Signing In...';
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '0.8';
+
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      showNotification("🎉 Welcome back! Redirecting to app...", 'success');
+      loginModal.classList.remove("show");
+      document.body.style.overflow = "auto";
+      
+      // Reset form
+      e.target.reset();
+      
+      // Redirect to /upload after successful login
+      setTimeout(() => {
+        window.location.href = '/upload';
+      }, 1500); // Wait 1.5 seconds to show the success message
+      
+    } catch (error) {
+      let errorMessage = "Login failed. Please try again.";
+      
+      // Handle specific Firebase errors
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = "No account found with this email address.";
+          break;
+        case 'auth/wrong-password':
+          errorMessage = "Incorrect password. Please try again.";
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = "Too many failed attempts. Please try again later.";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "Invalid email address format.";
+          break;
+        case 'auth/user-disabled':
+          errorMessage = "This account has been disabled.";
+          break;
+        default:
+          errorMessage = error.message;
+      }
+      
+      showNotification(`❌ ${errorMessage}`, 'error');
+    } finally {
+      // Restore button state
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+    }
+  });
+
+  // Signup Form with enhanced UX
+  document.getElementById("signup-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("signup-email").value.trim();
+    const password = document.getElementById("signup-password").value;
+    const name = document.getElementById("signup-name").value.trim();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    
+    // Enhanced validation
+    if (!name || !email || !password) {
+      showNotification("Please fill in all fields", 'error');
+      return;
+    }
+
+    if (name.length < 2) {
+      showNotification("Name must be at least 2 characters long", 'error');
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      showNotification("Please enter a valid email address", 'error');
+      return;
+    }
+
+    if (password.length < 6) {
+      showNotification("Password must be at least 6 characters long", 'error');
+      return;
+    }
+    
+    // Add loading state
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Creating Account...';
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '0.8';
+
+    try {
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      
+      // Update user profile with name
+      await userCredential.user.updateProfile({ 
+        displayName: name 
+      });
+      
+      showNotification("🎉 Account created successfully! Redirecting to app...", 'success');
+      signupModal.classList.remove("show");
+      document.body.style.overflow = "auto";
+      
+      // Reset form
+      e.target.reset();
+      
+      // Auto-redirect to /upload after successful signup
+      setTimeout(() => {
+        window.location.href = '/upload';
+      }, 2000); // Wait 2 seconds to show the success message
+      
+    } catch (error) {
+      let errorMessage = "Account creation failed. Please try again.";
+      
+      // Handle specific Firebase errors
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = "An account with this email already exists.";
+          break;
+        case 'auth/weak-password':
+          errorMessage = "Password is too weak. Please choose a stronger password.";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "Invalid email address format.";
+          break;
+        case 'auth/operation-not-allowed':
+          errorMessage = "Email/password accounts are not enabled.";
+          break;
+        default:
+          errorMessage = error.message;
+      }
+      
+      showNotification(`❌ ${errorMessage}`, 'error');
+    } finally {
+      // Restore button state
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+    }
+  });
+
+  // Utility function to validate email
+  function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  // Smooth scrolling for Learn More button
+  const learnMoreBtn = document.querySelector('a[href="#features"]');
+  if (learnMoreBtn) {
+    learnMoreBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const featuresSection = document.getElementById('features');
+      if (featuresSection) {
+        featuresSection.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
     });
-    f.addEventListener("mouseleave", () => {
-      f.style.background = "rgba(79,70,229,0.05)";
-      f.style.transform = "translateY(0)";
+  }
+
+  // Add staggered animation to features on load
+  const features = document.querySelectorAll('.feature');
+  features.forEach((feature, index) => {
+    feature.style.animationDelay = `${index * 0.1}s`;
+    feature.style.opacity = '0';
+    feature.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+      feature.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      feature.style.opacity = '1';
+      feature.style.transform = 'translateY(0)';
+    }, index * 100);
+  });
+
+  // Keyboard navigation for modals
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const openModal = document.querySelector('.modal.show');
+      if (openModal) {
+        openModal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+      }
+    }
+  });
+
+  // Enhanced form input handling
+  const inputs = document.querySelectorAll('input');
+  inputs.forEach(input => {
+    // Add floating label effect
+    input.addEventListener('focus', () => {
+      input.style.transform = 'scale(1.02)';
+    });
+    
+    input.addEventListener('blur', () => {
+      input.style.transform = 'scale(1)';
+    });
+
+    // Real-time validation feedback
+    input.addEventListener('input', () => {
+      if (input.type === 'email' && input.value) {
+        if (isValidEmail(input.value)) {
+          input.style.borderColor = '#10b981';
+        } else {
+          input.style.borderColor = '#ef4444';
+        }
+      }
+      
+      if (input.type === 'password' && input.value) {
+        if (input.value.length >= 6) {
+          input.style.borderColor = '#10b981';
+        } else {
+          input.style.borderColor = '#f59e0b';
+        }
+      }
     });
   });
-}
 
-// Utils
-function getFileExtension(filename) {
-  return filename.split(".").pop().toLowerCase();
-}
+  // Monitor authentication state
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      // User is signed in
+      console.log('User signed in:', user.displayName || user.email);
+      
+      // Update UI to show user is logged in
+      updateNavbarForLoggedInUser(user);
+      
+      // Optional: Show welcome message
+      // showNotification(`Welcome back, ${user.displayName || 'User'}!`, 'success');
+      
+    } else {
+      // User is signed out
+      console.log('User signed out');
+      updateNavbarForLoggedOutUser();
+    }
+  });
 
-function resetForm() {
-  selectedFile = null;
-  extractedText = "";
-  fileInput.value = "";
-  fileInfo.style.display = "none";
-  resetUploadArea();
-  resetAnalysisUI();
-}
+  // Function to update navbar for logged in user
+  function updateNavbarForLoggedInUser(user) {
+    const navRight = document.querySelector('.nav-right');
+    if (navRight) {
+      navRight.innerHTML = `
+        <span style="color: white; margin-right: 15px; font-weight: 500;">
+          Welcome, ${user.displayName || 'User'}
+        </span>
+        <button class="btn-outline" id="logout-btn">Logout</button>
+      `;
+      
+      // Add logout functionality
+      const logoutBtn = document.getElementById('logout-btn');
+      logoutBtn.addEventListener('click', async () => {
+        try {
+          await auth.signOut();
+          showNotification('✋ Logged out successfully', 'success');
+        } catch (error) {
+          showNotification('❌ Error logging out', 'error');
+        }
+      });
+    }
+  }
 
-// Global API
-window.LegalEaseAI = { resetForm, analyzeDocument, validateFile };
+  // Function to update navbar for logged out user
+  function updateNavbarForLoggedOutUser() {
+    const navRight = document.querySelector('.nav-right');
+    if (navRight) {
+      navRight.innerHTML = `
+        <button class="btn-outline" id="login-btn">Login</button>
+        <button class="btn-primary" id="signup-btn">Sign Up</button>
+      `;
+      
+      // Re-attach event listeners for login/signup buttons
+      const newLoginBtn = document.getElementById("login-btn");
+      const newSignupBtn = document.getElementById("signup-btn");
+      
+      newLoginBtn.addEventListener("click", () => {
+        loginModal.classList.add("show");
+        document.body.style.overflow = "hidden";
+      });
+
+      newSignupBtn.addEventListener("click", () => {
+        signupModal.classList.add("show");
+        document.body.style.overflow = "hidden";
+      });
+    }
+  }
+
+  // Add loading animation to page
+  function addPageLoadingAnimation() {
+    const hero = document.querySelector('.hero');
+    const navbar = document.querySelector('.navbar');
+    
+    if (hero) {
+      hero.style.opacity = '0';
+      hero.style.transform = 'translateY(30px)';
+      
+      setTimeout(() => {
+        hero.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+        hero.style.opacity = '1';
+        hero.style.transform = 'translateY(0)';
+      }, 100);
+    }
+    
+    if (navbar) {
+      navbar.style.transform = 'translateY(-100%)';
+      setTimeout(() => {
+        navbar.style.transition = 'transform 0.6s ease';
+        navbar.style.transform = 'translateY(0)';
+      }, 200);
+    }
+  }
+
+  // Initialize page animations
+  addPageLoadingAnimation();
+
+  // Add intersection observer for features animation
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animation = 'fadeInUp 0.6s ease forwards';
+      }
+    });
+  }, observerOptions);
+
+  // Observe all feature cards
+  features.forEach(feature => {
+    observer.observe(feature);
+  });
+
+  // Add CSS for fadeInUp animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Performance optimization: Debounce scroll events
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Add scroll-based navbar background opacity
+  const handleScroll = debounce(() => {
+    const navbar = document.querySelector('.navbar');
+    const scrolled = window.pageYOffset;
+    const rate = scrolled * -0.5;
+    
+    if (navbar) {
+      const opacity = Math.min(0.95, 0.15 + scrolled / 500);
+      navbar.style.background = `rgba(255, 255, 255, ${opacity})`;
+    }
+  }, 10);
+
+  window.addEventListener('scroll', handleScroll);
+
+  // Add focus trap for modals (accessibility improvement)
+  function trapFocus(modal) {
+    const focusableElements = modal.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstFocusableElement = focusableElements[0];
+    const lastFocusableElement = focusableElements[focusableElements.length - 1];
+
+    modal.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        if (e.shiftKey) {
+          if (document.activeElement === firstFocusableElement) {
+            lastFocusableElement.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastFocusableElement) {
+            firstFocusableElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    });
+
+    // Focus first element when modal opens
+    setTimeout(() => {
+      if (firstFocusableElement) {
+        firstFocusableElement.focus();
+      }
+    }, 100);
+  }
+
+  // Apply focus trap to both modals
+  trapFocus(loginModal);
+  trapFocus(signupModal);
+
+  console.log("✅ LegalEase AI initialization complete");
+});

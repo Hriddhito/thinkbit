@@ -160,5 +160,5 @@ function detectDates(text) {
 }
 
 function analyzeAnother() {
-  window.location.href = '/';
+  window.location.href = '/upload';
 }

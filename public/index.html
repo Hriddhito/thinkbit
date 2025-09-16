@@ -3,79 +3,83 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LegalEase AI - Demystify Legal Documents</title>
+  <title>LegalEase AI - Home</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- ✅ PDF.js global script -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 </head>
 <body>
-  <div class="bg-animation">
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="logo">⚖️ LegalEase AI</div>
+    </div>
+    <div class="nav-right">
+      <button class="btn-outline" id="login-btn">Login</button>
+      <button class="btn-primary" id="signup-btn">Sign Up</button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <h1>Understand Legal Documents with Ease</h1>
+    <p>AI-powered insights that simplify contracts, agreements, and policies into clear language you can trust.</p>
+    <div class="hero-buttons">
+      <a href="/upload" class="btn btn-primary">🚀 Try Now</a>
+      <a href="#features" class="btn btn-secondary">Learn More</a>
+    </div>
+  </header>
+
+  <!-- Features -->
+  <section id="features" class="features">
+    <div class="feature">
+      <h3>🔍 Smart Analysis</h3>
+      <p>Instantly break down complex contracts into easy-to-read summaries with advanced AI technology.</p>
+    </div>
+    <div class="feature">
+      <h3>💡 Clear Insights</h3>
+      <p>Highlight key parties, obligations, and risks in plain English that anyone can understand.</p>
+    </div>
+    <div class="feature">
+      <h3>🛡️ Secure & Private</h3>
+      <p>Your documents are processed securely with enterprise-grade encryption and never stored.</p>
+    </div>
+    <div class="feature">
+      <h3>⚡ Lightning Fast</h3>
+      <p>Upload and analyze any document in seconds with our cutting-edge AI processing engine.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Powered by <strong>LegalEase AI</strong> • Secure AI-Powered Legal Insights</p>
+  </footer>
+
+  <!-- Login Modal -->
+  <div id="login-modal" class="modal">
+    <div class="modal-content">
+      <button class="close" data-close="login-modal">&times;</button>
+      <h2>Welcome Back</h2>
+      <form id="login-form">
+        <input type="email" id="login-email" placeholder="Enter your email" required>
+        <input type="password" id="login-password" placeholder="Enter your password" required>
+        <button type="submit">Sign In</button>
+      </form>
+    </div>
   </div>
 
-  <div class="container">
-    <div class="logo"></div>
-    <h1>LegalEase AI</h1>
-    <p class="subtitle">Transform complex legal documents into clear, understandable insights</p>
-    
-    <div class="upload-area" id="upload-area">
-      <span class="upload-icon">📄</span>
-      <div class="upload-text">Drop your legal document here</div>
-      <div class="upload-subtext">or click to browse • Supports PDF, DOC, DOCX, TXT • Max 10MB</div>
-    </div>
-    
-    <input type="file" id="file-input" accept=".pdf,.doc,.docx,.txt" />
-    
-    <div class="file-info" id="file-info">
-      <div class="file-name" id="file-name"></div>
-      <div class="file-size" id="file-size"></div>
-    </div>
-    
-    <div class="progress-bar" id="progress-bar">
-      <div class="progress-fill" id="progress-fill"></div>
-    </div>
-    
-    <!-- ✅ Action Buttons -->
-    <div class="action-buttons">
-      <button class="btn btn-primary" id="quick-summary-btn">
-        📋 Quick Summary
-      </button>
-      <button class="btn btn-secondary" id="bot-summary-btn">
-        🤖 Bot Summary
-      </button>
-      <button class="btn btn-outline" id="choose-file-btn">
-        📎 Choose Different File
-      </button>
-    </div>
-
-    <!-- ✅ Results Section (inline preview, optional) -->
-    <div class="analysis-results" id="analysis-results" style="display:none;">
-      <h2>📑 Document Summary</h2>
-      <div id="analysis-text"></div>
-    </div>
-    <!-- ✅ End Results Section -->
-
-    <div class="features">
-      <div class="feature">
-        <span class="feature-icon">🔍</span>
-        <div class="feature-text">Smart Analysis</div>
-      </div>
-      <div class="feature">
-        <span class="feature-icon">🛡️</span>
-        <div class="feature-text">Private & Secure</div>
-      </div>
-      <div class="feature">
-        <span class="feature-icon">⚡</span>
-        <div class="feature-text">Instant Results</div>
-      </div>
-      <div class="feature">
-        <span class="feature-icon">💡</span>
-        <div class="feature-text">Plain English</div>
-      </div>
+  <!-- Signup Modal -->
+  <div id="signup-modal" class="modal">
+    <div class="modal-content">
+      <button class="close" data-close="signup-modal">&times;</button>
+      <h2>Get Started</h2>
+      <form id="signup-form">
+        <input type="text" id="signup-name" placeholder="Your full name" required>
+        <input type="email" id="signup-email" placeholder="Your email address" required>
+        <input type="password" id="signup-password" placeholder="Create a password" required>
+        <button type="submit">Create Account</button>
+      </form>
     </div>
   </div>
 
