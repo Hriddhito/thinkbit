@@ -25,4 +25,23 @@ Upload a contract, agreement, or any legal PDF/DOC/TXT, and the app will generat
 ---
 
 ## 📂 Project Structure
-
+LegalEase-AI/
+│
+├── public/ # Frontend files (served by Firebase)
+│ ├── home.html # Landing page
+│ ├── index.html # Upload & analysis page
+│ ├── summary.html # Summary results page
+│ ├── details.html # Detailed analysis + chatbot
+│ ├── styles.css # Main styles
+│ ├── summary-styles.css # Summary page styles
+│ ├── details-styles.css # Details page styles
+│ ├── home-styles.css # Homepage styles
+│ ├── script.js # Upload + analysis logic
+│ ├── summary-script.js # Summary page logic
+│ ├── details-script.js # Detailed analysis + chatbot logic
+│ └── home-script.js # Homepage interactivity
+│
+├── server.js # Express backend (Render)
+├── package.json # Node.js dependencies
+├── firebase.json # Firebase Hosting config
+└── README.md # Project documentation
