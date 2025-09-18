@@ -39,15 +39,14 @@ app.post("/analyze", async (req, res) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [
-          { role: "system", parts: [{ text: selectedPrompt }] },
+          { role: "user", parts: [{ text: selectedPrompt }] },
           { role: "user", parts: [{ text }] },
         ],
       }),
     });
 
     const data = await response.json();
-    const reply =
-      data.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
 
     res.json({ result: reply });
   } catch (err) {

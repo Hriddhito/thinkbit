@@ -1,4 +1,4 @@
-// 🌐 Backend URL (Render or local)
+// Backend URL (Render or local)
 const BACKEND_URL = "https://thinkbit-h81d.onrender.com/analyze";
 
 // DOM Elements
@@ -9,7 +9,6 @@ const fileSize = document.getElementById("file-size");
 const uploadArea = document.getElementById("upload-area");
 const quickSummaryBtn = document.getElementById("quick-summary-btn");
 const botSummaryBtn = document.getElementById("bot-summary-btn");
-const chooseFileBtn = document.getElementById("choose-file-btn");
 const progressBar = document.getElementById("progress-bar");
 const progressFill = document.getElementById("progress-fill");
 
@@ -27,15 +26,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   initializeApp();
 
-fileInput.addEventListener("change", handleFileSelect);
-uploadArea.addEventListener("click", () => fileInput.click());
-uploadArea.addEventListener("dragover", handleDragOver);
-uploadArea.addEventListener("dragleave", handleDragLeave);
-uploadArea.addEventListener("drop", handleDrop);
+  fileInput.addEventListener("change", handleFileSelect);
+  uploadArea.addEventListener("click", () => fileInput.click());
+  uploadArea.addEventListener("dragover", handleDragOver);
+  uploadArea.addEventListener("dragleave", handleDragLeave);
+  uploadArea.addEventListener("drop", handleDrop);
 
-quickSummaryBtn.addEventListener("click", () => analyzeDocument("/summary"));
-botSummaryBtn.addEventListener("click", () => analyzeDocument("/details"));
-chooseFileBtn.addEventListener("click", () => fileInput.click());
+  quickSummaryBtn.addEventListener("click", () => analyzeDocument("/summary"));
+  botSummaryBtn.addEventListener("click", () => analyzeDocument("/details"));
 });
 
 // Initialize
@@ -86,6 +84,14 @@ function updateUploadAreaSuccess() {
   `;
 }
 
+function resetUploadArea() {
+  uploadArea.innerHTML = `
+    <span class="upload-icon">📄</span>
+    <div class="upload-text">Drop your legal document here</div>
+    <div class="upload-subtext">or click to browse • Supports PDF, DOC, DOCX, TXT • Max 10MB</div>
+  `;
+}
+
 // Drag/drop
 function handleDragOver(e) { e.preventDefault(); uploadArea.classList.add("dragover"); }
 function handleDragLeave(e) { e.preventDefault(); uploadArea.classList.remove("dragover"); }
@@ -117,7 +123,8 @@ async function analyzeDocument(targetPage) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        text: `Classify this document: Is it a legal document (contract, agreement, court filing, law text, etc.)? Answer strictly with YES or NO.\n\nDocument:\n${text.slice(0, 2000)}`
+        text: `Classify this document: Is it a legal document (contract, agreement, court filing, law text, etc.)? Answer strictly with YES or NO.\n\nDocument:\n${text.slice(0, 2000)}`,
+        mode: 'default'
       }),
     });
 
