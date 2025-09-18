@@ -82,15 +82,7 @@ function updateUploadAreaSuccess() {
   uploadArea.innerHTML = `
     <span class="upload-icon">✅</span>
     <div class="upload-text">Document ready for analysis</div>
-    <div class="upload-subtext">Click a button below to continue</div>
-  `;
-}
-
-function resetUploadArea() {
-  uploadArea.innerHTML = `
-    <span class="upload-icon">📄</span>
-    <div class="upload-text">Drop your legal document here</div>
-    <div class="upload-subtext">or click to browse • Supports PDF, DOC, DOCX, TXT • Max 10MB</div>
+    <div class="upload-subtext">Click to choose different file</div>
   `;
 }
 
@@ -107,7 +99,7 @@ function handleDrop(e) {
   }
 }
 
-// Analyze document
+// ✅ Analyze document (with legal check)
 async function analyzeDocument(targetPage) {
   if (!selectedFile) {
     showAlert("Please select a document first!", "warning");
@@ -120,10 +112,32 @@ async function analyzeDocument(targetPage) {
     const text = await extractText(selectedFile);
     extractedText = text;
 
+    // Step 1: Check if the document is legal
+    const checkResponse = await fetch(BACKEND_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: `Classify this document: Is it a legal document (contract, agreement, court filing, law text, etc.)? Answer strictly with YES or NO.\n\nDocument:\n${text.slice(0, 2000)}`
+      }),
+    });
+
+    const checkData = await checkResponse.json();
+    const isLegal = checkData.result.trim().toLowerCase().startsWith("yes");
+
+    if (!isLegal) {
+      showAlert("❌ This doesn’t look like a legal document. Please upload a valid legal file.", "error");
+      resetAnalysisUI();
+      return;
+    }
+
+    // Step 2: Proceed with full analysis
     const response = await fetch(BACKEND_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({
+        text,
+        mode:'a'
+       }),
     });
 
     if (!response.ok) {

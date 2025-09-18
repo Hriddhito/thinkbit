@@ -116,7 +116,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: `Document context:\n${docText || summary}\n\nUser question: ${userMessage}`
+          text: `Document context:\n${docText || summary}\n\nUser question: ${userMessage}`,
+          mode: 'c'
         }),
       });
 

@@ -7,7 +7,7 @@
     ],
     "rewrites": [
       { "source": "/summary", "destination": "/summary.html" },
-      { "source": "/details", "destination": "/details.html" },
+      { "source": "/chatbot", "destination": "/details.html" },
       { "source": "/upload", "destination": "/upload.html" },
       { "source": "/", "destination": "/index.html" }
     ]
