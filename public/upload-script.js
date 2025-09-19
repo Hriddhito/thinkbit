@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
   uploadArea.addEventListener("drop", handleDrop);
 
   quickSummaryBtn.addEventListener("click", () => analyzeDocument("/summary"));
-  botSummaryBtn.addEventListener("click", () => analyzeDocument("/details"));
+  botSummaryBtn.addEventListener("click", () => analyzeDocument("/chatbot"));
 });
 
 // Initialize

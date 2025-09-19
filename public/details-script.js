@@ -1,3 +1,6 @@
+// Backend URL (Render or local)
+const BACKEND_URL = "https://thinkbit-h81d.onrender.com/analyze";
+
 document.addEventListener("DOMContentLoaded", async () => {
   let lastInputWasVoice = false; // flag for input mode
 
@@ -87,10 +90,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     chatInput.value = "";
 
     try {
-      const response = await fetch("/analyze", {
+      const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: `Document context:\n${docText || summary}\n\nUser question: ${userMessage}` }),
+        body: JSON.stringify({
+          text: `Document context:\n${docText || summary}\n\nUser question: ${userMessage}`,
+          mode: 'c'
+        })
       });
       const data = await response.json();
       addMessage(data.result || "Sorry, I couldn’t answer that.", "bot");
