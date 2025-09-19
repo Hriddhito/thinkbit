@@ -89,6 +89,32 @@ body {
   cursor: pointer;
 }
 
+#mic-btn {
+  background: #10b981; /* green for record */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all 0.3s ease;
+}
+
+#mic-btn:hover {
+  background: #059669;
+  transform: scale(1.1);
+}
+
+#mic-btn.listening {
+  background: #ef4444; /* red while listening */
+}
+
+
+.chat-input-container button:hover {
+  background: #4338ca;
+}
+
 /* === PDF Viewer Styles === */
 .pdf-viewer {
   background: white;
@@ -133,40 +159,4 @@ body {
 #page-info {
   font-size: 0.95em;
   color: #374151;
-}
-
-.details-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-#analyze-another-btn {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 25px;
-    font-weight: 600;
-    font-size: 0.95em;
-    cursor: pointer;
-    margin-top: 15px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-#analyze-another-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-    background: linear-gradient(135deg, #059669, #047857);
-}
-
-#analyze-another-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.document-details ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
 }

@@ -8,7 +8,7 @@ const app = express();
 
 //Enable CORS so Firebase frontend can call Render backend
 app.use(cors({
-  origin: "*",
+  origin: "https://thinkbit-471218.web.app",
 }));
 app.use(express.json());
 

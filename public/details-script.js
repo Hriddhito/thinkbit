@@ -1,29 +1,26 @@
-const BACKEND_URL = "https://thinkbit-h81d.onrender.com/analyze";
-
 document.addEventListener("DOMContentLoaded", async () => {
+  let lastInputWasVoice = false; // flag for input mode
+
   // Load document data from localStorage
   const docName = localStorage.getItem("docName") || "Unknown Document";
   const docSize = localStorage.getItem("docSize") || "Unknown Size";
   const summary = localStorage.getItem("docSummary") || "";
   const docText = localStorage.getItem("docText") || "";
-  const docFile = localStorage.getItem("docFile"); // base64 Data URL
+  const docFile = localStorage.getItem("docFile");
 
   // Update header
   document.getElementById("doc-title").textContent = docName;
   document.getElementById("doc-meta").textContent = `${docSize} • Processed ${new Date().toLocaleString()}`;
 
-  // === Document Metadata ===
+  // Metadata
   const words = (docText || summary).split(/\s+/).filter(Boolean).length;
-
   document.getElementById("detail-type").textContent = detectDocType(summary || docText);
   document.getElementById("detail-words").textContent = words.toLocaleString();
-
-  // Placeholder values – can improve later with AI
   document.getElementById("detail-parties").textContent = detectParties(docText);
   document.getElementById("detail-jurisdiction").textContent = detectJurisdiction(docText);
   document.getElementById("detail-dates").textContent = detectDates(docText);
 
-  // === PDF Preview with Navigation ===
+  // === PDF Viewer ===
   if (docFile && docFile.startsWith("data:application/pdf")) {
     try {
       const pdfData = atob(docFile.split(",")[1]);
@@ -42,8 +39,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       async function renderPage(num) {
         const page = await pdf.getPage(num);
-
-        // scale dynamically to container width
         const containerWidth = document.querySelector(".pdf-viewer").clientWidth;
         const viewport = page.getViewport({ scale: 1 });
         const scale = containerWidth / viewport.width;
@@ -52,48 +47,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         canvas.width = scaledViewport.width;
         canvas.height = scaledViewport.height;
 
-        const renderContext = {
-          canvasContext: ctx,
-          viewport: scaledViewport,
-        };
-
-        await page.render(renderContext).promise;
+        await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
         pageInfo.textContent = `Page ${num} of ${totalPages}`;
       }
 
-      // Button actions
-      prevBtn.addEventListener("click", () => {
-        if (currentPage > 1) {
-          currentPage--;
-          renderPage(currentPage);
-        }
-      });
+      prevBtn.addEventListener("click", () => { if (currentPage > 1) renderPage(--currentPage); });
+      nextBtn.addEventListener("click", () => { if (currentPage < totalPages) renderPage(++currentPage); });
 
-      nextBtn.addEventListener("click", () => {
-        if (currentPage < totalPages) {
-          currentPage++;
-          renderPage(currentPage);
-        }
-      });
-
-      // Initial render
       renderPage(currentPage);
-
-      // Update page count in metadata
       document.getElementById("detail-pages").textContent = totalPages;
-
     } catch (err) {
       console.error("PDF render failed:", err);
       document.getElementById("preview-fallback").style.display = "block";
     }
-  } else {
-    document.getElementById("detail-pages").textContent = "—";
-    document.getElementById("preview-fallback").style.display = "block";
   }
 
   // === Chatbot ===
   const chatInput = document.getElementById("chat-input");
   const sendBtn = document.getElementById("send-btn");
+  const micBtn = document.getElementById("mic-btn");
   const messagesDiv = document.getElementById("messages");
 
   function addMessage(text, sender) {
@@ -102,6 +74,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     msg.textContent = text;
     messagesDiv.appendChild(msg);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    // Only speak if last input was voice
+    if (sender === "bot" && lastInputWasVoice) speakText(text);
   }
 
   async function sendMessage() {
@@ -112,27 +87,76 @@ document.addEventListener("DOMContentLoaded", async () => {
     chatInput.value = "";
 
     try {
-      const response = await fetch(BACKEND_URL, {
+      const response = await fetch("/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: `Document context:\n${docText || summary}\n\nUser question: ${userMessage}`,
-          mode: 'c'
-        }),
+        body: JSON.stringify({ text: `Document context:\n${docText || summary}\n\nUser question: ${userMessage}` }),
       });
-
       const data = await response.json();
       addMessage(data.result || "Sorry, I couldn’t answer that.", "bot");
     } catch (error) {
       console.error(error);
       addMessage("⚠️ Error connecting to AI service.", "bot");
     }
+
+    // reset flag after each exchange
+    lastInputWasVoice = false;
   }
 
-  sendBtn.addEventListener("click", sendMessage);
-  chatInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") sendMessage();
+  sendBtn.addEventListener("click", () => {
+    lastInputWasVoice = false; // typed input
+    sendMessage();
   });
+  chatInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      lastInputWasVoice = false; // typed input
+      sendMessage();
+    }
+  });
+
+  // === Text-to-Speech ===
+  function speakText(text) {
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      speechSynthesis.speak(utterance);
+    }
+  }
+
+  // === Speech-to-Text ===
+  if ("webkitSpeechRecognition" in window) {
+    const recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+
+    micBtn.addEventListener("click", () => {
+      recognition.start();
+      micBtn.classList.add("listening");
+      micBtn.innerHTML = `<i class="fas fa-stop"></i>`;
+    });
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      chatInput.value = transcript;
+
+      // mark input as voice before sending
+      lastInputWasVoice = true;
+      sendMessage();
+
+      micBtn.classList.remove("listening");
+      micBtn.innerHTML = `<i class="fas fa-microphone"></i>`;
+    };
+
+    recognition.onerror = () => {
+      micBtn.classList.remove("listening");
+      micBtn.innerHTML = `<i class="fas fa-microphone"></i>`;
+    };
+    recognition.onend = () => {
+      micBtn.classList.remove("listening");
+      micBtn.innerHTML = `<i class="fas fa-microphone"></i>`;
+    };
+  }
 });
 
 // === Helper functions ===
@@ -141,25 +165,18 @@ function detectDocType(text) {
   if (t.includes("lease")) return "Lease Agreement";
   if (t.includes("contract") || t.includes("agreement")) return "Contract / Agreement";
   if (t.includes("policy")) return "Policy Document";
-  if (t.includes("testament") || t.includes("will")) return "Legal Will";
+  if (t.includes("will")) return "Legal Will";
   return "Legal Document";
 }
-
 function detectParties(text) {
   const match = text.match(/between\s+(.+?)\s+and\s+(.+?)[.,]/i);
   return match ? `${match[1]} & ${match[2]}` : "Not detected";
 }
-
 function detectJurisdiction(text) {
   const match = text.match(/laws of\s+([A-Za-z\s]+)/i);
   return match ? match[1].trim() : "Not detected";
 }
-
 function detectDates(text) {
   const matches = text.match(/\b(?:\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\b\s+\d{1,2},?\s+\d{4})/gi);
   return matches ? matches.join(", ") : "Not detected";
-}
-
-function analyzeAnother() {
-  window.location.href = '/upload';
 }
